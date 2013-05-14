@@ -25,30 +25,33 @@ class ImdbSpider(BaseSpider):
 		show["summary"] = hxs.select('//*[@id="overview-top"]/p[2]/text()').extract()[0]
 		show["image"] = hxs.select('//*[@id="img_primary"]/div/a/img/@src').extract()[0]
 		show["showId"] = re.search(r"title/tt(\d+)/" ,response.url).group(1)
-		yield show
 		
 		seasons = hxs.select('//*[@id="titleTVSeries"]/div[2]/span/a')
-		for season in seasons:
+		show["seasons"] = {}
+		for index,season in enumerate(seasons):
 			url = "http://" + self.allowed_domains[0] + season.select("@href").extract()[0]
-			yield Request(url , callback = self.parseEpisode, meta = {"showId" : show["showId"]})
+			show["seasons"].update({str(int(season.select("text()").extract()[0])) : []})
+			yield Request(url , callback = self.parseEpisode, meta = {"show" : show})
 	
 	def parseEpisode(self, response):
 		hxs = HtmlXPathSelector(response)
 		items = hxs.select('//*[@id="episodes_content"]/div[2]/div[2]/div')
-		episodes = []
 		for item in items:
 			episode = EpisodeItem()
 			episode["itemName"] = "episode"
 			episode["title"] = item.select("div[2]/strong/a/text()").extract()[0]
-			episode["summary"] = item.select('div[2]/div[2]/text()').extract()[0]
+			try:
+				episode["summary"] = item.select('div[2]/div[2]/text()').extract()[0]
+			except IndexError:
+				episode["summary"] = ""
 			episode["date"] = item.select('div[2]/div[1]/text()').extract()[0]
 			episode["episode"] = item.select('div[1]/a/div/div/text()').re('\d+')[1]
 			episode["season"] = item.select('div[1]/a/div/div/text()').re('\d+')[0]
 			episode["image"] = item.select('div[1]/a/div/img/@src').extract()[0]
 			episode["imdbUrl"] = response.url
-			episode["showId"] = response.meta["showId"]
-			episodes.append(episode)
-		return episodes
+			response.meta["show"]["seasons"][str(int(episode["season"]))].append(episode)
+		#return response.meta["show"]
+		return response.meta["show"]
 		# items = []
 		# for site in sites:
 		#     item = DmozItem()

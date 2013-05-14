@@ -15,10 +15,10 @@ class ShowItem(Item):
 	years = Field()
 	imdbUrl = Field()
 	image = Field()
+	seasons = Field()
 
 class EpisodeItem(Item):
 	itemName = Field()
-	showId = Field()
 	title = Field()
 	imdbUrl = Field()
 	summary = Field()
