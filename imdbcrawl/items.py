@@ -28,12 +28,18 @@ class EpisodeItem(Item):
 	season = Field()
 	image = Field()
 
-class EpisodeTorrentItem(Item):
+class TorrentItem(Item):
 	itemName = Field()
 	itemId = Field()
+	title = Field()
+	size = Field()
+	seeds = Field()
+	leeches = Field()
+	magnet = Field()
+	torrent = Field()
 	episode = Field()
 	season = Field()
-	torrents = Field()
+	unit = Field()
 	"""
 	You can access following properties via torrents dictionary 
 	example: following will give you title and torrent link of first torrent of current episode:

@@ -16,8 +16,12 @@ class ImdbSpider(BaseSpider):
 	This order, is used to determine which torrent belongs to which show
 	"""
 	start_urls = [
-		"http://www.imdb.com/title/tt0460681/?ref_=fn_al_tt_1",
-		"http://www.imdb.com/title/tt0944947/?ref_=sr_2"
+		"http://www.imdb.com/title/tt0944947/?ref_=sr_1",# Game of thrones
+		"http://www.imdb.com/title/tt0460681/?ref_=fn_al_tt_1",# Supernatural
+		"http://www.imdb.com/title/tt0773262/?ref_=sr_1",#Dexter
+		"http://www.imdb.com/title/tt1520211/?ref_=sr_1",#Walking dead
+		"http://www.imdb.com/title/tt0898266/?ref_=sr_1",#The Big Bang Theory
+		"http://www.imdb.com/title/tt0460649/?ref_=sr_1"#HIMYM
 	]
 
 	def parse(self, response):
@@ -46,9 +50,10 @@ class ImdbSpider(BaseSpider):
 			create dictionary in seasons and let keys be season numbers
 			To fix, proper json parsing for js, we are prepending season so that object name starts with a string
 			"""
-			show["seasons"].update({"season" + str(int(season.select("text()").extract()[0])) : []})
+			currentSeason = season.select("text()").extract()[0]
+			show["seasons"].update({"season" + currentSeason : []})
 			#request season page, and parse episode data in each season object
-			yield Request(url , callback = self.parseEpisode, meta = {"show" : show, "totalSeasons" : totalSeasons})
+			yield Request(url , callback = self.parseEpisode, meta = {"show" : show, "totalSeasons" : totalSeasons, "currentSeason" : currentSeason})
 	
 	def parseEpisode(self, response):
 		hxs = HtmlXPathSelector(response)
@@ -67,10 +72,10 @@ class ImdbSpider(BaseSpider):
 				episode["summary"] = ""
 			episode["date"] = item.select('div[2]/div[1]/text()').extract()[0]
 			episode["episode"] = item.select('div[1]/a/div/div/text()').re('\d+')[1]
-			episode["season"] = item.select('div[1]/a/div/div/text()').re('\d+')[0]
+			episode["season"] = response.meta["currentSeason"]
 			episode["image"] = item.select('div[1]/a/div/img/@src').extract()[0]
 			episode["imdbUrl"] = response.url
-			response.meta["show"]["seasons"]["season"+str(int(episode["season"]))].append(episode)
+			response.meta["show"]["seasons"]["season"+response.meta["currentSeason"]].append(episode)
 		"""
 		Only return response when this request is final request, otherwise we will return 
 		incomplete objects multiple times

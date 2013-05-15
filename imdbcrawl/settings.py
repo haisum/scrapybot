@@ -10,6 +10,7 @@ BOT_NAME = 'imdbcrawl'
 
 SPIDER_MODULES = ['imdbcrawl.spiders']
 NEWSPIDER_MODULE = 'imdbcrawl.spiders'
+LOG_FILE = "log.txt"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'imdbcrawl (+http://www.yourdomain.com)'

@@ -1,5 +1,5 @@
 <?php
-$json = file_get_contents("imdb.json");
+$json = file_get_contents($argv[1]);//or whatever file contains json
 $episodes = json_decode($json,true);
 function parseJsonToSql($json, $tableKey, $htmlFormatted = false){
 	$createStatements = "";
@@ -14,8 +14,8 @@ function parseJsonToSql($json, $tableKey, $htmlFormatted = false){
 	}
 	if(!empty($strings)){
 		$values = array_map("filterForSql", $strings);
-		$keys = array_map("filterForSql", array_keys($strings));
-		$createStatements .= "INSERT INTO {$strings[$tableKey]} ('" . implode("','", $keys) ."') VALUES(\"" . implode("\",\"", $values) . "\");";
+		$keys = array_keys($strings);
+		$createStatements .= "INSERT INTO `{$strings[$tableKey]}` (`" . implode("`,`", $keys) ."`) VALUES(\"" . implode("\",\"", $values) . "\");";
 	}
 	if($htmlFormatted){
 		return "<pre>" . $createStatements . "</pre><br/>";
@@ -27,5 +27,5 @@ function parseJsonToSql($json, $tableKey, $htmlFormatted = false){
 function filterForSql($input){
 	return addslashes($input);
 }
-echo parseJsonToSql($episodes, "itemName", true);
+echo parseJsonToSql($episodes, "itemName");
 ?>
