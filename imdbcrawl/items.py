@@ -33,9 +33,14 @@ class EpisodeTorrentItem(Item):
 	episode = Field()
 	season = Field()
 	torrents = Field()
-	# title = Field()
-	# size = Field()
-	# seed = Field()
-	# leach = Field()
-	# magnet = Field()
-	# torrent = Field()
+	"""
+	You can access following properties via torrents dictionary 
+	example: following will give you title and torrent link of first torrent of current episode:
+	myEpisodeTorrentItem["torrents"]["titles"][0] + episodeTorrentItem["torrents"]["torrents"][0] 
+	"""
+	# titles = []
+	# sizes = []
+	# seeds = []
+	# leachs = []
+	# magnets = []
+	# torrents = []

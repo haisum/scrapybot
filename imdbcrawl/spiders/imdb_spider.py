@@ -8,13 +8,22 @@ class ImdbSpider(BaseSpider):
 	name = "imdb"
 	allowed_domains = ["imdb.com"]
 	currentRequestCount = {}
-	#index of these urls will be used as primary key for linking related data
+	"""
+	add more comma separated urls as you want
+	but do remember, to keep same sequence in torrent crawler
+	for example if here first is game of thrones, and second url is for supernatural
+	same order of urls should be inside torrent spider's start_urls
+	This order, is used to determine which torrent belongs to which show
+	"""
 	start_urls = [
 		"http://www.imdb.com/title/tt0460681/?ref_=fn_al_tt_1",
 		"http://www.imdb.com/title/tt0944947/?ref_=sr_2"
 	]
 
 	def parse(self, response):
+		"""
+		parse first imdb page for show and grab links for season wise listings
+		"""
 		hxs = HtmlXPathSelector(response)
 		show = ShowItem()
 		show["itemId"] = self.start_urls.index(response.url)
@@ -38,6 +47,7 @@ class ImdbSpider(BaseSpider):
 			To fix, proper json parsing for js, we are prepending season so that object name starts with a string
 			"""
 			show["seasons"].update({"season" + str(int(season.select("text()").extract()[0])) : []})
+			#request season page, and parse episode data in each season object
 			yield Request(url , callback = self.parseEpisode, meta = {"show" : show, "totalSeasons" : totalSeasons})
 	
 	def parseEpisode(self, response):
