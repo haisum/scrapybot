@@ -7,6 +7,7 @@ from imdbcrawl.items import ShowItem, EpisodeItem
 class ImdbSpider(BaseSpider):
 	name = "imdb"
 	allowed_domains = ["imdb.com"]
+	currentRequestCount = {}
 	#index of these urls will be used as primary key for linking related data
 	start_urls = [
 		"http://www.imdb.com/title/tt0460681/?ref_=fn_al_tt_1",
@@ -19,6 +20,7 @@ class ImdbSpider(BaseSpider):
 		show["itemId"] = self.start_urls.index(response.url)
 		show["itemName"] = "show"
 		show["title"] = hxs.select('//*[@id="overview-top"]/h1/span[1]/text()').extract()[0]
+		self.currentRequestCount[show["title"]] = 0
 		show["years"] = hxs.select('//*[@id="overview-top"]/h1/span[2]/text()').extract()[0]
 		show["rating"] = hxs.select('//*[@id="overview-top"]/div[2]/div[1]/text()').extract()[0]
 		show["imdbUrl"] = response.url
@@ -27,11 +29,16 @@ class ImdbSpider(BaseSpider):
 		show["showId"] = re.search(r"title/tt(\d+)/" ,response.url).group(1)
 		
 		seasons = hxs.select('//*[@id="titleTVSeries"]/div[2]/span/a')
+		totalSeasons = len(seasons)
 		show["seasons"] = {}
-		for index,season in enumerate(seasons):
+		for season in seasons:
 			url = "http://" + self.allowed_domains[0] + season.select("@href").extract()[0]
-			show["seasons"].update({str(int(season.select("text()").extract()[0])) : []})
-			yield Request(url , callback = self.parseEpisode, meta = {"show" : show})
+			"""
+			create dictionary in seasons and let keys be season numbers
+			To fix, proper json parsing for js, we are prepending season so that object name starts with a string
+			"""
+			show["seasons"].update({"season" + str(int(season.select("text()").extract()[0])) : []})
+			yield Request(url , callback = self.parseEpisode, meta = {"show" : show, "totalSeasons" : totalSeasons})
 	
 	def parseEpisode(self, response):
 		hxs = HtmlXPathSelector(response)
@@ -40,6 +47,9 @@ class ImdbSpider(BaseSpider):
 			episode = EpisodeItem()
 			episode["itemName"] = "episode"
 			episode["title"] = item.select("div[2]/strong/a/text()").extract()[0]
+			"""
+			Sometimes summary isn't available on imdb
+			"""
 			try:
 				episode["summary"] = item.select('div[2]/div[2]/text()').extract()[0]
 			except IndexError:
@@ -49,14 +59,13 @@ class ImdbSpider(BaseSpider):
 			episode["season"] = item.select('div[1]/a/div/div/text()').re('\d+')[0]
 			episode["image"] = item.select('div[1]/a/div/img/@src').extract()[0]
 			episode["imdbUrl"] = response.url
-			response.meta["show"]["seasons"][str(int(episode["season"]))].append(episode)
-		#return response.meta["show"]
-		return response.meta["show"]
-		# items = []
-		# for site in sites:
-		#     item = DmozItem()
-		#     item['title'] = site.select('a/text()').extract()
-		#     item['link'] = site.select('a/@href').extract()
-		#     item['desc'] = site.select('text()').extract()
-		#     items.append(item)
-		# return items
+			response.meta["show"]["seasons"]["season"+str(int(episode["season"]))].append(episode)
+		"""
+		Only return response when this request is final request, otherwise we will return 
+		incomplete objects multiple times
+		"""
+		self.currentRequestCount[response.meta["show"]["title"]] = self.currentRequestCount[response.meta["show"]["title"]]+ 1
+		if(self.currentRequestCount[response.meta["show"]["title"]] == response.meta["totalSeasons"]):
+			return response.meta["show"]
+		else:
+			return None
