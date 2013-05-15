@@ -26,7 +26,7 @@ class ImdbSpider(BaseSpider):
 		"""
 		hxs = HtmlXPathSelector(response)
 		show = ShowItem()
-		show["itemId"] = self.start_urls.index(response.url)
+		show["itemId"] = str(self.start_urls.index(response.url))
 		show["itemName"] = "show"
 		show["title"] = hxs.select('//*[@id="overview-top"]/h1/span[1]/text()').extract()[0]
 		self.currentRequestCount[show["title"]] = 0
@@ -56,6 +56,7 @@ class ImdbSpider(BaseSpider):
 		for item in items:
 			episode = EpisodeItem()
 			episode["itemName"] = "episode"
+			episode["itemId"] = response.meta["show"]["itemId"]
 			episode["title"] = item.select("div[2]/strong/a/text()").extract()[0]
 			"""
 			Sometimes summary isn't available on imdb

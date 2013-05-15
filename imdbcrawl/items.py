@@ -19,6 +19,7 @@ class ShowItem(Item):
 
 class EpisodeItem(Item):
 	itemName = Field()
+	itemId = Field()
 	title = Field()
 	imdbUrl = Field()
 	summary = Field()
