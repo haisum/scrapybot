@@ -16,13 +16,19 @@ class ImdbSpider(BaseSpider):
 	This order, is used to determine which torrent belongs to which show
 	"""
 	start_urls = [
-		"http://www.imdb.com/title/tt0944947/?ref_=sr_1",# Game of thrones
-		"http://www.imdb.com/title/tt0460681/?ref_=fn_al_tt_1",# Supernatural
-		"http://www.imdb.com/title/tt0773262/?ref_=sr_1",#Dexter
-		"http://www.imdb.com/title/tt1520211/?ref_=sr_1",#Walking dead
-		"http://www.imdb.com/title/tt0898266/?ref_=sr_1",#The Big Bang Theory
-		"http://www.imdb.com/title/tt0460649/?ref_=sr_1"#HIMYM
+		"http://www.imdb.com/title/tt1405406/?ref_=sr_1",#vampire diaries
+		"http://www.imdb.com/title/tt0903747/",#breaking bad
+		"http://www.imdb.com/title/tt0455275/",#prison break
+		"http://www.imdb.com/title/tt1475582/",#Sherlock
+		"http://www.imdb.com/title/tt0412142/",#House M.D.
+		"http://www.imdb.com/title/tt0904208/",#Californification
 	]
+	"""
+	This number is added in itemId
+	next time you run this spider itemId of californification will be 11, set this to 12
+	so that itemId remains unique for all shows 
+	"""
+	start_index = 6
 
 	def parse(self, response):
 		"""
@@ -30,7 +36,7 @@ class ImdbSpider(BaseSpider):
 		"""
 		hxs = HtmlXPathSelector(response)
 		show = ShowItem()
-		show["itemId"] = str(self.start_urls.index(response.url))
+		show["itemId"] = str(self.start_urls.index(response.url) + self.start_index)
 		show["itemName"] = "show"
 		show["title"] = hxs.select('//*[@id="overview-top"]/h1/span[1]/text()').extract()[0]
 		self.currentRequestCount[show["title"]] = 0
@@ -41,7 +47,7 @@ class ImdbSpider(BaseSpider):
 		show["image"] = hxs.select('//*[@id="img_primary"]/div/a/img/@src').extract()[0]
 		show["showId"] = re.search(r"title/tt(\d+)/" ,response.url).group(1)
 		
-		seasons = hxs.select('//*[@id="titleTVSeries"]/div[2]/span/a')
+		seasons = hxs.select('//*[@id="titleTVSeries"]/div[1]/span/a')
 		totalSeasons = len(seasons)
 		show["seasons"] = {}
 		for season in seasons:
@@ -71,7 +77,10 @@ class ImdbSpider(BaseSpider):
 			except IndexError:
 				episode["summary"] = ""
 			episode["date"] = item.select('div[2]/div[1]/text()').extract()[0]
-			episode["episode"] = item.select('div[1]/a/div/div/text()').re('\d+')[1]
+			try:
+				episode["episode"] = item.select('div[1]/a/div/div/text()').re('\d+')[1]
+			except IndexError:
+				episode["episode"] = "-1"
 			episode["season"] = response.meta["currentSeason"]
 			episode["image"] = item.select('div[1]/a/div/img/@src').extract()[0]
 			episode["imdbUrl"] = response.url

@@ -10,18 +10,22 @@ class KatphSpider(BaseSpider):
 	allowed_domains = ["kat.ph"]
 	#index of these urls will be used as primary key for linking related data
 	start_urls = [
-		"http://kat.ph/game-of-thrones-tv24493/",
-		"http://kat.ph/supernatural-tv5410/",#
-		"http://kat.ph/dexter-tv7926/",#
-		"http://kat.ph/the-walking-dead-tv25056/",#
-		"http://kat.ph/the-big-bang-theory-tv8511/",#
-		"http://kat.ph/how-i-met-your-mother-tv3918/"
+		"http://kat.ph/the-vampire-diaries-tv21766/",
+		"http://kat.ph/breaking-bad-tv18164/",
+		"http://kat.ph/prison-break-tv4895/",
+		"http://kat.ph/sherlock-tv23433/",
+		"http://kat.ph/house-tv3908/",
+		"http://kat.ph/californication-tv15319/"
 	]
+	"""
+	This number is added in itemId
+	"""
+	start_index = 6
 
 	def parse(self, response):
 		hxs = HtmlXPathSelector(response)
 		torrent = TorrentItem()
-		torrent["itemId"] = str(self.start_urls.index(response.url))
+		torrent["itemId"] = str(self.start_urls.index(response.url) + self.start_index)
 		torrent["itemName"] = "torrent"
 		seasons = hxs.select("/html/body/div[4]/table/tr/td[1]/h3/text()").re('\d+')
 		elemContainers = hxs.select("/html/body/div[4]/table/tr/td[1]/div[not(@class='advertising horizontalAdvert') and not(@class='torrentMediaInfo')]")
